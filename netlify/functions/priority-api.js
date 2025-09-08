@@ -13,66 +13,125 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // פרטי חיבור ממשתני סביבה
+    // בדיקת משתני סביבה
     const username = process.env.PRIORITY_USERNAME;
     const password = process.env.PRIORITY_PASSWORD;
     
-    console.log('Environment check:', {
-      hasUsername: !!username,
-      hasPassword: !!password,
-      usernameLength: username ? username.length : 0
-    });
+    console.log('=== DEBUG INFO ===');
+    console.log('Username exists:', !!username);
+    console.log('Password exists:', !!password);
     
     if (!username || !password) {
-      console.error('Missing credentials:', { username: !!username, password: !!password });
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({ 
-          error: 'פרטי חיבור לא מוגדרים בשרת - בדוק משתני סביבה',
-          details: 'PRIORITY_USERNAME או PRIORITY_PASSWORD לא מוגדרים'
+          error: 'פרטי חיבור לא מוגדרים',
+          debug: { hasUsername: !!username, hasPassword: !!password }
         })
       };
     }
 
     const { date, action } = JSON.parse(event.body);
-    console.log('Request data:', { date, action });
+    console.log('Request:', { date, action });
     
-    const auth = Buffer.from(username + ':' + password).toString('base64');
+    // נסה תחילה בלי פילטר תאריך
     const baseUrl = 'https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
     
     let apiUrl = baseUrl;
+    
+    // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      apiUrl = baseUrl + '?$filter=DUEDATE%20eq%20' + date + 'T00:00:00Z';
+      // נסה כמה פורמטים שונים של תאריך
+      const dateFormats = [
+        `${date}T00:00:00Z`,
+        `${date}T00:00:00`,
+        `${date}`,
+        `datetime'${date}T00:00:00'`
+      ];
+      
+      // נשתמש בפורמט הראשון לבדיקה
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
     }
 
-    console.log('Request URL:', apiUrl);
-    console.log('Auth header length:', auth.length);
+    console.log('API URL:', apiUrl);
     
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    console.log('Auth created, length:', auth.length);
+    
+    // נסה קודם בדיקת connectivity פשוטה
     const result = await makeHttpsRequest(apiUrl, auth);
-    console.log('Response:', { statusCode: result.statusCode, bodyLength: result.body.length });
-
+    
+    console.log('Response status:', result.statusCode);
+    console.log('Response body preview:', result.body.substring(0, 200));
+    
     if (result.statusCode === 200) {
-      let data = JSON.parse(result.body);
-      console.log('Parsed data:', { recordCount: data && data.value ? data.value.length : 0 });
-      
+      try {
+        const data = JSON.parse(result.body);
+        console.log('Successfully parsed JSON');
+        console.log('Data keys:', Object.keys(data));
+        console.log('Record count:', data.value ? data.value.length : 0);
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            data: data,
+            recordCount: data.value ? data.value.length : 0,
+            debug: {
+              url: apiUrl,
+              responseKeys: Object.keys(data)
+            }
+          })
+        };
+      } catch (parseError) {
+        console.error('JSON Parse error:', parseError);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            error: 'שגיאה בפרסור התשובה',
+            debug: {
+              responseBody: result.body.substring(0, 500),
+              parseError: parseError.message
+            }
+          })
+        };
+      }
+    } else if (result.statusCode === 401) {
       return {
-        statusCode: 200,
+        statusCode: 401,
         headers,
-        body: JSON.stringify({
-          success: true,
-          data: data,
-          recordCount: data && data.value ? data.value.length : 0
+        body: JSON.stringify({ 
+          error: 'שגיאת הרשאה - בדוק שם משתמש וסיסמה',
+          debug: { statusCode: result.statusCode }
+        })
+      };
+    } else if (result.statusCode === 404) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ 
+          error: 'לא נמצא - בדוק את כתובת ה-API',
+          debug: { 
+            statusCode: result.statusCode,
+            url: apiUrl,
+            responseBody: result.body.substring(0, 200)
+          }
         })
       };
     } else {
-      console.error('API Error:', { statusCode: result.statusCode, body: result.body });
       return {
         statusCode: result.statusCode,
         headers,
         body: JSON.stringify({ 
-          error: 'שגיאה ' + result.statusCode,
-          details: result.body
+          error: `שגיאת שרת ${result.statusCode}`,
+          debug: {
+            statusCode: result.statusCode,
+            responseBody: result.body.substring(0, 500),
+            url: apiUrl
+          }
         })
       };
     }
@@ -83,8 +142,11 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: 'שגיאת שרת: ' + error.message,
-        stack: error.stack
+        error: 'שגיאת שרת כללית',
+        debug: {
+          message: error.message,
+          stack: error.stack.substring(0, 500)
+        }
       })
     };
   }
@@ -99,40 +161,45 @@ function makeHttpsRequest(url, auth) {
       path: urlObj.pathname + urlObj.search,
       method: 'GET',
       headers: {
-        'Authorization': 'Basic ' + auth,
+        'Authorization': `Basic ${auth}`,
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
         'User-Agent': 'Priority-Data-Portal/1.0'
       },
-      timeout: 30000
+      timeout: 15000  // 15 שניות timeout
     };
 
-    console.log('Making request to:', urlObj.hostname + urlObj.pathname);
+    console.log('Making request to:', options.hostname + options.path);
+    console.log('Headers:', JSON.stringify(options.headers, null, 2));
 
     const req = https.request(options, (res) => {
       let data = '';
       
-      console.log('Response status:', res.statusCode);
-      console.log('Response headers:', res.headers);
+      console.log('Response headers:', JSON.stringify(res.headers, null, 2));
       
       res.on('data', (chunk) => { 
         data += chunk; 
       });
       
       res.on('end', () => {
-        console.log('Response completed, data length:', data.length);
-        resolve({ statusCode: res.statusCode, body: data });
+        console.log('Request completed. Data length:', data.length);
+        resolve({ 
+          statusCode: res.statusCode, 
+          body: data,
+          headers: res.headers 
+        });
       });
     });
     
     req.on('error', (error) => {
       console.error('Request error:', error);
-      reject(error);
+      reject(new Error(`Network error: ${error.message}`));
     });
     
     req.on('timeout', () => {
       console.error('Request timeout');
       req.destroy();
-      reject(new Error('Request timeout'));
+      reject(new Error('Request timeout - הזמן הקצוב עבר'));
     });
     
     req.end();
