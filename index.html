@@ -659,6 +659,9 @@
         
         function searchCustomer() {
             const input = document.getElementById('customerInput').value.trim();
+            console.log('Searching for customer:', input);
+            console.log('Total orders loaded:', allOrders.length);
+            
             if (!input) {
                 alert('אנא הכנס מספר לקוח או שם');
                 return;
@@ -667,6 +670,12 @@
             if (allOrders.length === 0) {
                 alert('אנא טען נתונים תחילה');
                 return;
+            }
+            
+            // בואו נראה מה השדות הזמינים
+            if (allOrders.length > 0) {
+                console.log('Sample order fields:', Object.keys(allOrders[0]));
+                console.log('Sample order data:', allOrders[0]);
             }
             
             showLoading('מחפש הזמנות לקוח');
