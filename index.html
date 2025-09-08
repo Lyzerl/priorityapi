@@ -543,8 +543,15 @@
                     throw new Error('תשובה ריקה מהשרת');
                 }
                 
-                const result = JSON.parse(text);
-                console.log('Parsed result:', result);
+                let result;
+                try {
+                    result = JSON.parse(text);
+                    console.log('Parsed result:', result);
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError);
+                    console.error('Problematic text:', text.substring(0, 500));
+                    throw new Error('שגיאה בפענוח התשובה מהשרת: ' + parseError.message);
+                }
                 return {
                     ok: response.ok,
                     status: response.status,
@@ -689,21 +696,28 @@
                 try {
                     // חיפוש לקוח - רק בשדות הקיימים
                     const searchTerm = input.toLowerCase();
+                    console.log('Search term:', searchTerm);
+                    
                     const customerOrders = allOrders.filter(order => {
                         // חיפוש במספר לקוח (CUSTNAME)
                         const custId = (order.CUSTNAME || '').toString().toLowerCase();
                         // חיפוש בשם לקוח (CUSTDES)
                         const custName = (order.CUSTDES || '').toString().toLowerCase();
                         
-                        console.log('Checking order:', {
-                            CUSTNAME: order.CUSTNAME,
-                            CUSTDES: order.CUSTDES,
-                            searchTerm: searchTerm,
-                            custIdMatch: custId.includes(searchTerm),
-                            custNameMatch: custName.includes(searchTerm)
-                        });
+                        const matches = custId.includes(searchTerm) || custName.includes(searchTerm);
                         
-                        return custId.includes(searchTerm) || custName.includes(searchTerm);
+                        // הדפס רק את הרשומות הראשונות שמתאימות
+                        if (matches && customerOrders.length < 3) {
+                            console.log('Found matching order:', {
+                                CUSTNAME: order.CUSTNAME,
+                                CUSTDES: order.CUSTDES,
+                                searchTerm: searchTerm,
+                                custIdMatch: custId.includes(searchTerm),
+                                custNameMatch: custName.includes(searchTerm)
+                            });
+                        }
+                        
+                        return matches;
                     });
                     
                     if (customerOrders.length > 0) {
