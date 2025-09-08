@@ -110,14 +110,14 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נסה עם פגינציה - 500 רשומות בכל פעם
+      // נסה עם פגינציה - 2000 רשומות בכל פעם
       const skip = 0; // התחל מהרשומה הראשונה
-      const top = 500; // 500 רשומות בכל פעם
+      const top = 2000; // 2000 רשומות בכל פעם
       // נטען רק את השדות החשובים כדי לחסוך זמן
-      const selectFields = 'ORDNAME,ORDSTATUSDES,DUEDATE,BRANCHNAME,CUSTNAME,CUSTDES,CODE,CODEDES,QUANT,SPEC1,SPEC2';
+      const selectFields = 'ORDNAME,ORDSTATUSDES,DUEDATE,BRANCHNAME,CUSTNAME,CUSTDES,CODE,CODEDES,QUANT,SPEC1,SPEC2,MEALNAME,PARTNAME,PARTDES';
       apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$skip=${skip}&$top=${top}&$select=${selectFields}`;
       console.log('Using date filter with pagination for:', date);
-      console.log('API URL with pagination (500 records):', apiUrl);
+      console.log('API URL with pagination (2000 records):', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
