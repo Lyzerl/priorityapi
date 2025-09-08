@@ -414,8 +414,8 @@
     </div>
 
     <script>
-        // חזרה ל-Netlify function עם אופטימיזציה
-        const API_ENDPOINT = '/.netlify/functions/priority-api';
+        // גישה חדשה - קריאה מקובץ JSON סטטי
+        const API_ENDPOINT = '/data/orders.json';
         let allOrders = []; // מאחסן את כל ההזמנות
         let customers = []; // רשימת לקוחות
         
@@ -517,20 +517,19 @@
             results.style.display = 'block';
         }
         
-        async function callNetlifyFunction(data) {
-            console.log('callNetlifyFunction called with data:', data);
+        async function loadJSONData() {
+            console.log('loadJSONData called');
             console.log('API_ENDPOINT:', API_ENDPOINT);
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 שניות timeout
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 שניות timeout
                 
-                console.log('Making fetch request...');
+                console.log('Making fetch request to JSON file...');
                 const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify(data),
                     signal: controller.signal
                 });
                 
@@ -559,7 +558,7 @@
                 };
                 
             } catch (error) {
-                console.error('Error in callNetlifyFunction:', error);
+                console.error('Error in loadJSONData:', error);
                 if (error.name === 'AbortError') {
                     throw new Error('הבקשה בוטלה - השרת לא מגיב בזמן הקצוב');
                 } else if (error.message.includes('Failed to fetch')) {
@@ -582,13 +581,10 @@
             }
             
             console.log('Starting to load data...');
-            showLoading('טוען נתוני היום מ-Priority - זה יכול לקחת עד 30 שניות...');
+            showLoading('טוען נתונים מקובץ JSON...');
             
             try {
-                const response = await callNetlifyFunction({
-                    date: date,
-                    action: 'getData'
-                });
+                const response = await loadJSONData();
                 
                 if (response.ok && response.data.success) {
                     allOrders = response.data.data.value || [];
