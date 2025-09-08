@@ -106,9 +106,18 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נסה עם פילטר תאריך
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
+      // נסה פורמטים שונים של תאריך
+      const dateFormats = [
+        `${baseUrl}?$filter=DUEDATE eq '${date}'`,
+        `${baseUrl}?$filter=DUEDATE eq '${date}T00:00:00'`,
+        `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`,
+        `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'`
+      ];
+      
+      // נשתמש בפורמט הראשון (הפשוט ביותר)
+      apiUrl = dateFormats[0];
       console.log('Using date filter for:', date);
+      console.log('API URL with date filter:', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
@@ -119,6 +128,33 @@ exports.handler = async (event, context) => {
       result = await makeHttpsRequest(apiUrl, auth);
       console.log('Response status:', result.statusCode);
       console.log('Response body preview:', result.body.substring(0, 200));
+      
+      // אם יש שגיאת 400, נסה פורמטים אחרים של תאריך
+      if (result.statusCode === 400 && action === 'getData' && date) {
+        console.log('400 error - trying different date formats...');
+        
+        const dateFormats = [
+          `${baseUrl}?$filter=DUEDATE eq '${date}T00:00:00'`,
+          `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'`,
+          `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`,
+          baseUrl // בלי פילטר תאריך
+        ];
+        
+        for (let i = 0; i < dateFormats.length; i++) {
+          console.log(`Trying date format ${i + 1}:`, dateFormats[i]);
+          try {
+            result = await makeHttpsRequest(dateFormats[i], auth);
+            console.log(`Date format ${i + 1} response status:`, result.statusCode);
+            if (result.statusCode === 200) {
+              console.log(`Success with date format ${i + 1}!`);
+              break;
+            }
+          } catch (formatError) {
+            console.log(`Date format ${i + 1} failed:`, formatError.message);
+          }
+        }
+      }
+      
     } catch (timeoutError) {
       console.error('Request failed with timeout or network error:', timeoutError.message);
       
