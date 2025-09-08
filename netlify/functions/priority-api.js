@@ -35,35 +35,79 @@ exports.handler = async (event, context) => {
     const { date, action } = JSON.parse(event.body);
     console.log('Request:', { date, action });
     
-    // נסה תחילה בלי פילטר תאריך
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    console.log('Auth created, length:', auth.length);
+    
+    // נסה תחילה בלי פילטר תאריך לבדיקת חיבור
     const baseUrl = 'https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
     
     let apiUrl = baseUrl;
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נסה כמה פורמטים שונים של תאריך
-      const dateFormats = [
-        `${date}T00:00:00Z`,
-        `${date}T00:00:00`,
-        `${date}`,
-        `datetime'${date}T00:00:00'`
-      ];
+      // נסה תחילה בלי פילטר כדי לוודא שהחיבור עובד
+      console.log('Testing connection without date filter first...');
       
-      // נשתמש בפורמט הראשון לבדיקה
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
+      // נסה קודם בלי פילטר תאריך
+      const testResult = await makeHttpsRequest(baseUrl, auth);
+      console.log('Test connection result:', testResult.statusCode);
+      
+      if (testResult.statusCode === 200) {
+        // אם החיבור עובד, נסה עם פילטר תאריך
+        apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
+        console.log('Connection successful, trying with date filter...');
+      } else {
+        // אם החיבור לא עובד, נשתמש ב-URL הבסיסי
+        console.log('Connection failed, using base URL without filter');
+        apiUrl = baseUrl;
+      }
     }
 
     console.log('API URL:', apiUrl);
     
-    const auth = Buffer.from(`${username}:${password}`).toString('base64');
-    console.log('Auth created, length:', auth.length);
-    
     // נסה קודם בדיקת connectivity פשוטה
-    const result = await makeHttpsRequest(apiUrl, auth);
-    
-    console.log('Response status:', result.statusCode);
-    console.log('Response body preview:', result.body.substring(0, 200));
+    let result;
+    try {
+      result = await makeHttpsRequest(apiUrl, auth);
+      console.log('Response status:', result.statusCode);
+      console.log('Response body preview:', result.body.substring(0, 200));
+    } catch (timeoutError) {
+      console.error('Request failed with timeout or network error:', timeoutError.message);
+      
+      // נסה fallback עם URL פשוט יותר
+      if (apiUrl !== baseUrl) {
+        console.log('Trying fallback with base URL...');
+        try {
+          result = await makeHttpsRequest(baseUrl, auth);
+          console.log('Fallback response status:', result.statusCode);
+        } catch (fallbackError) {
+          return {
+            statusCode: 504,
+            headers,
+            body: JSON.stringify({ 
+              error: 'שגיאת timeout - השרת לא מגיב בזמן הקצוב',
+              debug: {
+                originalError: timeoutError.message,
+                fallbackError: fallbackError.message,
+                url: apiUrl
+              }
+            })
+          };
+        }
+      } else {
+        return {
+          statusCode: 504,
+          headers,
+          body: JSON.stringify({ 
+            error: 'שגיאת timeout - השרת לא מגיב בזמן הקצוב',
+            debug: {
+              error: timeoutError.message,
+              url: apiUrl
+            }
+          })
+        };
+      }
+    }
     
     if (result.statusCode === 200) {
       try {
@@ -166,7 +210,7 @@ function makeHttpsRequest(url, auth) {
         'Content-Type': 'application/json',
         'User-Agent': 'Priority-Data-Portal/1.0'
       },
-      timeout: 15000  // 15 שניות timeout
+      timeout: 8000   // 8 שניות timeout (Netlify מוגבל ל-10 שניות)
     };
 
     console.log('Making request to:', options.hostname + options.path);
@@ -197,9 +241,9 @@ function makeHttpsRequest(url, auth) {
     });
     
     req.on('timeout', () => {
-      console.error('Request timeout');
+      console.error('Request timeout after 8 seconds');
       req.destroy();
-      reject(new Error('Request timeout - הזמן הקצוב עבר'));
+      reject(new Error('Request timeout - הזמן הקצוב עבר (8 שניות)'));
     });
     
     req.end();

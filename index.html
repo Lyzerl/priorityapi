@@ -515,13 +515,19 @@
         
         async function callNetlifyFunction(data) {
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 שניות timeout
+                
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 const text = await response.text();
                 if (!text.trim()) {
@@ -536,7 +542,15 @@
                 };
                 
             } catch (error) {
-                throw error;
+                if (error.name === 'AbortError') {
+                    throw new Error('הבקשה בוטלה - השרת לא מגיב בזמן הקצוב');
+                } else if (error.message.includes('Failed to fetch')) {
+                    throw new Error('שגיאת רשת - בדוק את החיבור לאינטרנט');
+                } else if (error.message.includes('504')) {
+                    throw new Error('שגיאת timeout - השרת לא מגיב בזמן הקצוב');
+                } else {
+                    throw error;
+                }
             }
         }
         
@@ -579,8 +593,25 @@
                 }
                 
             } catch (error) {
-                showResult(false, 'שגיאת תקשורת', `
-                    <p>שגיאה: ${error.message}</p>
+                let errorMessage = error.message;
+                let errorTitle = 'שגיאת תקשורת';
+                
+                if (error.message.includes('timeout') || error.message.includes('בוטלה')) {
+                    errorTitle = 'שגיאת זמן קצוב';
+                    errorMessage = 'השרת לא מגיב בזמן הקצוב. זה יכול לקרות כאשר יש הרבה נתונים לטעינה. נסה שוב או פנה למנהל המערכת.';
+                } else if (error.message.includes('רשת')) {
+                    errorTitle = 'שגיאת רשת';
+                    errorMessage = 'יש בעיה בחיבור לאינטרנט או לשרת. בדוק את החיבור ונסה שוב.';
+                } else if (error.message.includes('504')) {
+                    errorTitle = 'שגיאת שרת';
+                    errorMessage = 'השרת עמוס מדי או לא זמין כרגע. נסה שוב בעוד כמה דקות.';
+                }
+                
+                showResult(false, errorTitle, `
+                    <p><strong>שגיאה:</strong> ${errorMessage}</p>
+                    <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                        אם הבעיה נמשכת, פנה למנהל המערכת עם פרטי השגיאה.
+                    </p>
                 `);
             } finally {
                 hideLoading();
