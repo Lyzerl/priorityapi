@@ -110,12 +110,12 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נטען את כל הנתונים ללא הגבלה
+      // נטען עם הגבלה גדולה יותר - 3000 רשומות
       // נטען רק את השדות החשובים כדי לחסוך זמן
       const selectFields = 'ORDNAME,ORDSTATUSDES,DUEDATE,BRANCHNAME,CUSTNAME,CUSTDES,CODE,CODEDES,QUANT,SPEC1,SPEC2,MEALNAME,PARTNAME,PARTDES';
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$select=${selectFields}`;
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$top=3000&$select=${selectFields}`;
       console.log('Using date filter with pagination for:', date);
-      console.log('API URL with all records (no limit):', apiUrl);
+      console.log('API URL with 3000 records limit:', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
