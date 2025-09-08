@@ -518,7 +518,7 @@
             console.log('API_ENDPOINT:', API_ENDPOINT);
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 שניות timeout
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 שניות timeout
                 
                 console.log('Making fetch request...');
                 const response = await fetch(API_ENDPOINT, {
@@ -571,7 +571,7 @@
             }
             
             console.log('Starting to load data...');
-            showLoading('טוען נתוני היום מ-Priority');
+            showLoading('טוען נתוני היום מ-Priority - זה יכול לקחת עד 30 שניות...');
             
             try {
                 const response = await callNetlifyFunction({

@@ -104,6 +104,10 @@ exports.handler = async (event, context) => {
     
     let apiUrl = baseUrl;
     
+    // ננסה תחילה בלי פילטר תאריך לבדיקה
+    console.log('Testing without date filter first to check connectivity');
+    apiUrl = baseUrl;
+    
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
       // הפורמט הנכון לפי הבדיקה שלך
@@ -305,7 +309,7 @@ function makeHttpsRequest(url, auth) {
         'Content-Type': 'application/json',
         'User-Agent': 'Priority-Data-Portal/1.0'
       },
-      timeout: 8000   // 8 שניות timeout (Netlify מוגבל ל-10 שניות)
+      timeout: 25000  // 25 שניות timeout (Netlify מוגבל ל-30 שניות)
     };
 
     console.log('Making request to:', options.hostname + options.path);
