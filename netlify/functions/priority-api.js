@@ -110,12 +110,12 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נטען עם הגבלה גדולה יותר - 3000 רשומות
+      // נטען את כל הנתונים ללא הגבלה - ננסה להוריד קובץ JSON
       // נטען רק את השדות החשובים כדי לחסוך זמן
       const selectFields = 'ORDNAME,ORDSTATUSDES,DUEDATE,BRANCHNAME,CUSTNAME,CUSTDES,CODE,CODEDES,QUANT,SPEC1,SPEC2,MEALNAME,PARTNAME,PARTDES';
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$top=3000&$select=${selectFields}`;
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$select=${selectFields}&$format=json`;
       console.log('Using date filter with pagination for:', date);
-      console.log('API URL with 3000 records limit:', apiUrl);
+      console.log('API URL with JSON format (all records):', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
@@ -126,6 +126,7 @@ exports.handler = async (event, context) => {
       result = await makeHttpsRequest(apiUrl, auth);
       console.log('Response status:', result.statusCode);
       console.log('Response body preview:', result.body.substring(0, 200));
+      console.log('Response body length:', result.body.length);
       
       // אם יש שגיאת 400, נסה פורמטים אחרים של תאריך
       if (result.statusCode === 400 && action === 'getData' && date) {
@@ -307,11 +308,12 @@ function makeHttpsRequest(url, auth) {
       method: 'GET',
       headers: {
         'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
         'Content-Type': 'application/json',
         'User-Agent': 'Priority-Data-Portal/1.0'
       },
-      timeout: 25000  // 25 שניות timeout (Netlify מוגבל ל-30 שניות)
+      timeout: 30000  // 30 שניות timeout (Netlify מוגבל ל-30 שניות)
     };
 
     console.log('Making request to:', options.hostname + options.path);
