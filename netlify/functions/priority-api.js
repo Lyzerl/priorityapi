@@ -1,88 +1,100 @@
 const https = require('https');
 
 exports.handler = async (event, context) => {
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
   };
 
+  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+    return {
+      statusCode: 200,
+      headers: headers,
+      body: ''
+    };
   }
 
+  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      headers: headers,
+      body: JSON.stringify({ error: 'Only POST allowed' })
     };
   }
 
   try {
-    const { username, password, date, action } = JSON.parse(event.body);
+    // Parse request
+    const data = JSON.parse(event.body);
+    const { username, password, date, action } = data;
 
+    // Validate input
     if (!username || !password) {
       return {
         statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'חסרים שם משתמש או סיסמה' })
+        headers: headers,
+        body: JSON.stringify({ error: 'Missing username or password' })
       };
     }
 
+    // Create auth
     const auth = Buffer.from(username + ':' + password).toString('base64');
-    const baseUrl = 'https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
-    
-    let apiUrl = baseUrl;
+
+    // Build URL
+    let url = 'https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
     if (action === 'getData' && date) {
-      const filter = encodeURIComponent('DUEDATE eq ' + date + 'T00:00:00Z');
-      apiUrl = baseUrl + '?$filter=' + filter;
+      url += '?$filter=DUEDATE eq ' + date + 'T00:00:00Z';
     }
 
-    const result = await makeHttpsRequest(apiUrl, auth);
+    // Make request
+    const result = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'p.priority-connect.online',
+        path: url.replace('https://p.priority-connect.online', ''),
+        method: 'GET',
+        headers: {
+          'Authorization': 'Basic ' + auth,
+          'Accept': 'application/json'
+        }
+      };
 
-    if (result.statusCode === 200) {
-      const data = JSON.parse(result.body);
+      const req = https.request(options, (res) => {
+        let body = '';
+        res.on('data', (chunk) => body += chunk);
+        res.on('end', () => resolve({ status: res.statusCode, body: body }));
+      });
+
+      req.on('error', reject);
+      req.end();
+    });
+
+    // Return result
+    if (result.status === 200) {
       return {
         statusCode: 200,
-        headers,
+        headers: headers,
         body: JSON.stringify({
           success: true,
-          data: data,
-          user: username,
-          searchDate: date,
-          recordCount: data.value ? data.value.length : 0
+          data: JSON.parse(result.body)
         })
       };
     } else {
-      let errorMessage = 'שגיאה ' + result.statusCode;
-      try {
-        const errorData = JSON.parse(result.body);
-        if (errorData.error && errorData.error.message) {
-          errorMessage = errorData.error.message;
-        }
-      } catch (e) {
-        errorMessage = 'שגיאה ' + result.statusCode;
-      }
-
       return {
-        statusCode: result.statusCode,
-        headers,
-        body: JSON.stringify({ error: errorMessage })
+        statusCode: result.status,
+        headers: headers,
+        body: JSON.stringify({ error: 'API Error: ' + result.status })
       };
     }
 
   } catch (error) {
     return {
       statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: 'שגיאת שרת פנימית: ' + error.message 
-      })
+      headers: headers,
+      body: JSON.stringify({ error: 'Server error: ' + error.message })
     };
   }
 };
-
-function makeHttpsRequest(url, auth) {
-  r
