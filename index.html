@@ -632,8 +632,8 @@
             const customerMap = new Map();
             
             orders.forEach(order => {
-                // נניח שיש שדות CUSTNAME ו-CUSTNO
-                const custId = order.CUSTNO || order.CustomerID || order.CUST_ID || 'לא ידוע';
+                // השדות האמיתיים לפי Priority API
+                const custId = order.CODE || order.CUSTNO || order.CustomerID || order.CUST_ID || 'לא ידוע';
                 const custName = order.CUSTNAME || order.CustomerName || order.CUST_NAME || 'לא ידוע';
                 
                 if (custId !== 'לא ידוע') {
@@ -685,7 +685,7 @@
                     // חיפוש לקוח
                     const searchTerm = input.toLowerCase();
                     const customerOrders = allOrders.filter(order => {
-                        const custId = (order.CUSTNO || order.CustomerID || order.CUST_ID || '').toString().toLowerCase();
+                        const custId = (order.CODE || order.CUSTNO || order.CustomerID || order.CUST_ID || '').toString().toLowerCase();
                         const custName = (order.CUSTNAME || order.CustomerName || order.CUST_NAME || '').toString().toLowerCase();
                         
                         return custId.includes(searchTerm) || custName.includes(searchTerm);
@@ -713,7 +713,7 @@
             
             // פרטי הלקוח מההזמנה הראשונה
             const firstOrder = orders[0];
-            const customerId = firstOrder.CUSTNO || firstOrder.CustomerID || firstOrder.CUST_ID || 'לא ידוע';
+            const customerId = firstOrder.CODE || firstOrder.CUSTNO || firstOrder.CustomerID || firstOrder.CUST_ID || 'לא ידוע';
             const customerName = firstOrder.CUSTNAME || firstOrder.CustomerName || firstOrder.CUST_NAME || 'לא ידוע';
             
             let content = `
