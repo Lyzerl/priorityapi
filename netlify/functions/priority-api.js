@@ -104,16 +104,16 @@ exports.handler = async (event, context) => {
     
     let apiUrl = baseUrl;
     
-    // ננסה תחילה בלי פילטר תאריך לבדיקה
-    console.log('Testing without date filter first to check connectivity');
-    apiUrl = baseUrl;
+    // ננסה תחילה עם הגבלת רשומות לבדיקה
+    console.log('Testing with limited records first to check connectivity');
+    apiUrl = `${baseUrl}?$top=10`;
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // הפורמט הנכון לפי הבדיקה שלך
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z`;
+      // הפורמט הנכון עם הגבלת מספר רשומות
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$top=100`;
       console.log('Using date filter for:', date);
-      console.log('API URL with date filter:', apiUrl);
+      console.log('API URL with date filter (limited to 100 records):', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
@@ -130,10 +130,10 @@ exports.handler = async (event, context) => {
         console.log('400 error - trying different date formats...');
         
         const dateFormats = [
-          `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z`,
-          `${baseUrl}?$filter=DUEDATE eq '${date}'`,
-          `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'`,
-          baseUrl // בלי פילטר תאריך
+          `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$top=50`,
+          `${baseUrl}?$filter=DUEDATE eq '${date}'&$top=50`,
+          `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'&$top=50`,
+          `${baseUrl}?$top=10` // רק 10 רשומות לבדיקה
         ];
         
         for (let i = 0; i < dateFormats.length; i++) {
