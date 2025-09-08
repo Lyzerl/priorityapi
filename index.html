@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Data Portal - Netlify</title>
+    <title>Priority Data Portal</title>
     <style>
         * {
             box-sizing: border-box;
@@ -259,40 +259,36 @@
             font-size: 13px;
         }
         
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 10px;
-        }
-        
-        .status-success {
-            background: #28a745;
-        }
-        
-        .status-error {
-            background: #dc3545;
+        .speed-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏢 Priority Data Portal</h1>
-            <p>מופעל על Netlify - פתרון CORS מושלם</p>
+            <h1>Priority Data Portal</h1>
+            <p>מערכת לקבלת נתונים ממערכת Priority</p>
         </div>
         
         <div class="main-content">
-            <!-- הודעת הצלחה -->
             <div class="success-badge">
-                <h3>✅ פתרון CORS מושלם!</h3>
-                <p>הגרסה הזו רצה על Netlify עם Functions - אין בעיות CORS כלל!</p>
+                <h3>מערכת פעילה</h3>
+                <p>פתרון CORS מושלם עם Netlify Functions</p>
             </div>
             
-            <!-- טופס נתונים -->
+            <div class="speed-note">
+                <strong>לתשומת לב:</strong> הבקשות עלולות לקחת 10-30 שניות בגלל החיבור לשרת Priority חיצוני
+            </div>
+            
             <div class="form-section">
-                <h3>🔐 פרטי גישה למערכת Priority</h3>
+                <h3>פרטי גישה למערכת Priority</h3>
                 <div class="input-row">
                     <div class="input-group">
                         <label for="username">שם משתמש:</label>
@@ -318,26 +314,23 @@
                 </div>
             </div>
             
-            <!-- כפתורי פעולה -->
             <div class="button-group">
                 <button class="btn btn-test" onclick="testConnection()" id="testBtn">
-                    🔍 בדוק חיבור
+                    בדוק חיבור
                 </button>
                 <button class="btn" onclick="fetchData()" id="fetchBtn">
-                    📊 קבל נתונים
+                    קבל נתונים
                 </button>
                 <button class="btn btn-secondary" onclick="clearResults()">
-                    🗑️ נקה תוצאות
+                    נקה תוצאות
                 </button>
             </div>
             
-            <!-- מצב טעינה -->
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">מתחבר למערכת Priority...</div>
             </div>
             
-            <!-- תוצאות -->
             <div class="results" id="results">
                 <div class="result-header" id="resultHeader">
                     <h3 id="resultTitle"></h3>
@@ -349,10 +342,9 @@
     </div>
 
     <script>
-        // כתובת הFunction ב-Netlify
         const API_ENDPOINT = '/.netlify/functions/priority-api';
         
-        // עדכון מידע החיפוש כשמשנים תאריך
+        // עדכון מידע החיפוש
         document.getElementById('searchDate').addEventListener('change', function() {
             const date = this.value;
             const formatted = new Date(date).toLocaleDateString('he-IL');
@@ -364,15 +356,12 @@
             document.querySelector('.loading-text').textContent = message;
             document.getElementById('results').style.display = 'none';
             
-            // השבת כפתורים
             document.getElementById('testBtn').disabled = true;
             document.getElementById('fetchBtn').disabled = true;
         }
         
         function hideLoading() {
             document.getElementById('loading').style.display = 'none';
-            
-            // הפעל כפתורים
             document.getElementById('testBtn').disabled = false;
             document.getElementById('fetchBtn').disabled = false;
         }
@@ -410,22 +399,44 @@
         }
         
         async function callNetlifyFunction(data) {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            return response;
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const text = await response.text();
+                
+                if (!text.trim()) {
+                    throw new Error('תשובה ריקה מהשרת');
+                }
+                
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (parseError) {
+                    throw new Error('שגיאה בפענוח התשובה: ' + text.substring(0, 100));
+                }
+                
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: result
+                };
+                
+            } catch (error) {
+                throw error;
+            }
         }
         
         async function testConnection() {
             const formData = getFormData();
             if (!formData) return;
             
-            showLoading('בודק חיבור דרך Netlify Function');
+            showLoading('בודק חיבור למערכת Priority');
             
             try {
                 const response = await callNetlifyFunction({
@@ -434,28 +445,25 @@
                     action: 'test'
                 });
                 
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
+                if (response.ok && response.data.success) {
                     showResult(true, 'חיבור הצליח!', `
                         <div class="data-summary">
-                            <h4>✅ מחובר בהצלחה כמשתמש: ${formData.username}</h4>
-                            <p><span class="status-indicator status-success"></span>החיבור ל-Priority API תקין</p>
-                            <p><span class="status-indicator status-success"></span>Netlify Function פועל כראוי</p>
+                            <h4>מחובר בהצלחה כמשתמש: ${formData.username}</h4>
+                            <p>המערכת זמינה ומוכנה לקבלת נתונים</p>
                         </div>
-                        <p>המערכת מוכנה לקבלת נתונים. לחץ על "קבל נתונים" לחיפוש.</p>
+                        <p>עכשיו תוכל ללחוץ על "קבל נתונים" לחיפוש בתאריך שבחרת.</p>
                     `);
                 } else {
                     showResult(false, 'שגיאת חיבור', `
-                        <p><span class="status-indicator status-error"></span><strong>שגיאה:</strong> ${result.error || 'שגיאה לא ידועה'}</p>
-                        <p>בדוק את פרטי החיבור ורשאות הגישה למערכת Priority.</p>
+                        <p><strong>שגיאה:</strong> ${response.data.error || 'שגיאה לא ידועה'}</p>
+                        <p>בדוק את פרטי החיבור ורשאות הגישה.</p>
                     `);
                 }
                 
             } catch (error) {
                 showResult(false, 'שגיאת תקשורת', `
-                    <p><span class="status-indicator status-error"></span>שגיאה: ${error.message}</p>
-                    <p>בדוק שה-Netlify Function פועל כראוי.</p>
+                    <p><strong>שגיאה:</strong> ${error.message}</p>
+                    <p>ייתכן שיש בעיית רשת או שהשרת לא זמין זמנית.</p>
                 `);
             } finally {
                 hideLoading();
@@ -466,7 +474,7 @@
             const formData = getFormData();
             if (!formData) return;
             
-            showLoading('מחפש נתונים במערכת Priority');
+            showLoading('מחפש נתונים במערכת Priority - זה עלול לקחת זמן');
             
             try {
                 const response = await callNetlifyFunction({
@@ -476,21 +484,19 @@
                     action: 'getData'
                 });
                 
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    displayData(result.data, formData.date);
+                if (response.ok && response.data.success) {
+                    displayData(response.data.data, formData.date);
                 } else {
                     showResult(false, 'שגיאה בקבלת נתונים', `
-                        <p><strong>שגיאה:</strong> ${result.error || 'שגיאה לא ידועה'}</p>
+                        <p><strong>שגיאה:</strong> ${response.data.error || 'שגיאה לא ידועה'}</p>
                         <p>בדוק את פרטי החיבור ורשאות הגישה.</p>
                     `);
                 }
                 
             } catch (error) {
                 showResult(false, 'שגיאת תקשורת', `
-                    <p>שגיאה: ${error.message}</p>
-                    <p>בדוק חיבור לאינטרנט וש-Netlify Function פועל.</p>
+                    <p><strong>שגיאה:</strong> ${error.message}</p>
+                    <p>ייתכן שיש בעיית רשת או שהשרת עמוס. נסה שוב בעוד כמה דקות.</p>
                 `);
             } finally {
                 hideLoading();
@@ -502,16 +508,14 @@
             
             let content = `
                 <div class="data-summary">
-                    <h4>📊 תוצאות חיפוש ליום ${formattedDate}</h4>
+                    <h4>תוצאות חיפוש ליום ${formattedDate}</h4>
                     <p>נמצאו <strong>${data.value ? data.value.length : 0}</strong> רשומות</p>
                 </div>
             `;
             
             if (data.value && data.value.length > 0) {
-                // יצירת טבלת נתונים
                 content += '<table class="data-table">';
                 
-                // כותרות טבלה
                 const firstRow = data.value[0];
                 content += '<thead><tr>';
                 for (let key in firstRow) {
@@ -519,14 +523,12 @@
                 }
                 content += '</tr></thead><tbody>';
                 
-                // שורות נתונים (מגביל ל-50 שורות לביצועים)
                 const displayRows = data.value.slice(0, 50);
                 displayRows.forEach(row => {
                     content += '<tr>';
                     for (let key in row) {
                         let value = row[key];
                         
-                        // עיצוב תאריכים
                         if (key.includes('DATE') && value && typeof value === 'string' && value.includes('T')) {
                             try {
                                 const date = new Date(value);
@@ -541,7 +543,6 @@
                             value = '-';
                         }
                         
-                        // חיתוך טקסט ארוך
                         if (typeof value === 'string' && value.length > 50) {
                             value = value.substring(0, 47) + '...';
                         }
@@ -561,26 +562,24 @@
                 
             } else {
                 content += `<p style="text-align: center; padding: 20px; color: #6c757d;">
-                    ❌ לא נמצאו רשומות עבור התאריך ${formattedDate}
+                    לא נמצאו רשומות עבור התאריך ${formattedDate}
                 </p>`;
             }
             
-            // נתונים גולמיים (קטן יותר)
             content += `
-                <h4 style="margin-top: 30px;">📋 נתונים גולמיים (JSON):</h4>
+                <h4 style="margin-top: 30px;">נתונים גולמיים (JSON):</h4>
                 <div class="json-viewer">${JSON.stringify(data, null, 2)}</div>
             `;
             
-            showResult(true, `נתונים התקבלו בהצלחה!`, content);
+            showResult(true, 'נתונים התקבלו בהצלחה!', content);
         }
         
         function clearResults() {
             document.getElementById('results').style.display = 'none';
         }
         
-        // אתחול ראשוני
+        // אתחול
         document.addEventListener('DOMContentLoaded', function() {
-            // עדכון מידע החיפוש
             const date = document.getElementById('searchDate').value;
             const formatted = new Date(date).toLocaleDateString('he-IL');
             document.getElementById('searchInfo').textContent = `מחפש רשומות ליום ${formatted}`;
