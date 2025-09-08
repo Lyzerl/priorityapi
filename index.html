@@ -389,6 +389,9 @@
                         <button class="btn btn-secondary" onclick="clearResults()">
                             נקה
                         </button>
+                        <button class="btn btn-secondary" onclick="showSampleData()" style="background: #17a2b8;">
+                            הצג דוגמת נתונים
+                        </button>
                     </div>
                 </div>
             </div>
@@ -675,7 +678,8 @@
             // בואו נראה מה השדות הזמינים
             if (allOrders.length > 0) {
                 console.log('Sample order fields:', Object.keys(allOrders[0]));
-                console.log('Sample order data:', allOrders[0]);
+                console.log('Sample order data (JSON):', JSON.stringify(allOrders[0], null, 2));
+                console.log('Sample order data (object):', allOrders[0]);
             }
             
             showLoading('מחפש הזמנות לקוח');
@@ -791,6 +795,37 @@
             document.getElementById('customerInput').value = '';
             document.getElementById('customerDropdown').style.display = 'none';
             document.getElementById('searchBtn').disabled = true;
+        }
+        
+        function showSampleData() {
+            if (allOrders.length === 0) {
+                alert('אנא טען נתונים תחילה');
+                return;
+            }
+            
+            const sampleOrder = allOrders[0];
+            const jsonData = JSON.stringify(sampleOrder, null, 2);
+            
+            showResult(true, 'דוגמת נתונים מההזמנה הראשונה', `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h4 style="margin-bottom: 15px;">שדות זמינים:</h4>
+                    <div style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                        <code>${Object.keys(sampleOrder).join(', ')}</code>
+                    </div>
+                    
+                    <h4 style="margin-bottom: 15px;">נתונים מלאים (JSON):</h4>
+                    <pre style="background: white; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px; max-height: 400px;">${jsonData}</pre>
+                    
+                    <h4 style="margin-bottom: 15px;">שדות חשובים לזיהוי:</h4>
+                    <div style="background: white; padding: 15px; border-radius: 5px;">
+                        <p><strong>CUSTNAME:</strong> ${sampleOrder.CUSTNAME || 'לא זמין'}</p>
+                        <p><strong>CUSTDES:</strong> ${sampleOrder.CUSTDES || 'לא זמין'}</p>
+                        <p><strong>CODE:</strong> ${sampleOrder.CODE || 'לא זמין'}</p>
+                        <p><strong>ORDNAME:</strong> ${sampleOrder.ORDNAME || 'לא זמין'}</p>
+                        <p><strong>PARTNAME:</strong> ${sampleOrder.PARTNAME || 'לא זמין'}</p>
+                    </div>
+                </div>
+            `);
         }
     </script>
 </body>
