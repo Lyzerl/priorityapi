@@ -715,63 +715,64 @@
         function displayCustomerOrders(orders) {
             if (orders.length === 0) return;
             
-            // פרטי הלקוח מההזמנה הראשונה
-            const firstOrder = orders[0];
-            const customerId = firstOrder.CUSTNAME || firstOrder.CODE || firstOrder.CUSTNO || firstOrder.CustomerID || firstOrder.CUST_ID || 'לא ידוע';
-            const customerName = firstOrder.CUSTDES || firstOrder.CustomerName || firstOrder.CUST_NAME || 'לא ידוע';
-            
-            let content = `
-                <div class="customer-details">
-                    <h4 style="margin-bottom: 15px; text-align: center;">פרטי לקוח</h4>
-                    <div class="customer-info">
-                        <div class="info-item">
-                            <strong>מספר לקוח:</strong>
-                            ${customerId}
-                        </div>
-                        <div class="info-item">
-                            <strong>שם לקוח:</strong>
-                            ${customerName}
-                        </div>
-                        <div class="info-item">
-                            <strong>כתובת:</strong>
-                            ${firstOrder.ADDRESS || firstOrder.CUSTADDRESS || 'לא זמין'}
-                        </div>
-                        <div class="info-item">
-                            <strong>טלפון:</strong>
-                            ${firstOrder.PHONE || firstOrder.CUSTPHONE || 'לא זמין'}
-                        </div>
-                        <div class="info-item">
-                            <strong>סה"כ הזמנות:</strong>
-                            ${orders.length}
-                        </div>
-                        <div class="info-item">
-                            <strong>תאריך עדכון:</strong>
-                            ${new Date().toLocaleDateString('he-IL')}
-                        </div>
-                    </div>
-                </div>
+            // קיבוץ הזמנות לפי לקוח
+            const customerGroups = {};
+            orders.forEach(order => {
+                const customerId = order.CUSTNAME || order.CODE || order.CUSTNO || order.CustomerID || order.CUST_ID || 'לא ידוע';
+                const customerName = order.CUSTDES || order.CustomerName || order.CUST_NAME || 'לא ידוע';
                 
-                <div class="orders-section">
-                    <h4 style="margin-bottom: 20px;">הזמנות הלקוח:</h4>
-            `;
+                if (!customerGroups[customerId]) {
+                    customerGroups[customerId] = {
+                        name: customerName,
+                        orders: []
+                    };
+                }
+                customerGroups[customerId].orders.push(order);
+            });
             
-            orders.forEach((order, index) => {
-                const orderNumber = order.ORDNO || order.OrderNumber || order.ORDER_ID || `הזמנה ${index + 1}`;
-                const orderDate = order.ORDERDATE || order.ORDER_DATE || order.DUEDATE || 'לא ידוע';
-                const orderStatus = order.STATUS || order.ORDER_STATUS || 'פעיל';
-                const orderAmount = order.TOTPRICE || order.TOTAL || order.AMOUNT || 'לא ידוע';
+            // הצגת כל הלקוחות
+            let content = '<div class="customers-container">';
+            
+            Object.keys(customerGroups).forEach(customerId => {
+                const customer = customerGroups[customerId];
+                const customerOrders = customer.orders;
                 
                 content += `
-                    <div class="order-card">
-                        <div class="order-header">
-                            <div class="order-number">הזמנה: ${orderNumber}</div>
-                            <div class="order-status status-active">${orderStatus}</div>
+                    <div class="customer-section" style="margin-bottom: 30px; border: 2px solid #e9ecef; border-radius: 15px; overflow: hidden;">
+                        <div class="customer-header" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px;">
+                            <h3 style="margin: 0; font-size: 1.4em;">${customer.name}</h3>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9;">מספר לקוח: ${customerId} | ${customerOrders.length} הזמנות</p>
                         </div>
-                        <div class="order-details">
-                            <div><strong>תאריך:</strong> ${formatDate(orderDate)}</div>
-                            <div><strong>סכום:</strong> ${orderAmount}</div>
-                            <div><strong>מוצר:</strong> ${order.PARTNAME || order.PRODUCT || 'לא ידוע'}</div>
-                            <div><strong>כמות:</strong> ${order.TQUANT || order.QUANTITY || 'לא ידוע'}</div>
+                        
+                        <div class="customer-orders" style="padding: 20px; background: white;">
+                            <div class="orders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                `;
+                
+                customerOrders.forEach((order, index) => {
+                    const orderNumber = order.ORDNAME || order.ORDNO || order.OrderNumber || `הזמנה ${index + 1}`;
+                    const orderDate = order.DUEDATE || order.ORDERDATE || order.ORDER_DATE || 'לא ידוע';
+                    const orderStatus = order.ORDSTATUSDES || order.STATUS || order.ORDER_STATUS || 'פעיל';
+                    const partName = order.PARTNAME || order.PRODUCT || 'לא ידוע';
+                    const quantity = order.TQUANT || order.QUANTITY || 'לא ידוע';
+                    const unitName = order.TUNITNAME || order.UNITNAME || '';
+                    
+                    content += `
+                        <div class="order-item" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; background: #f8f9fa;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #667eea;">${orderNumber}</strong>
+                                <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${orderStatus}</span>
+                            </div>
+                            <div style="font-size: 14px; color: #666;">
+                                <div><strong>תאריך:</strong> ${formatDate(orderDate)}</div>
+                                <div><strong>מוצר:</strong> ${partName}</div>
+                                <div><strong>כמות:</strong> ${quantity} ${unitName}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                content += `
+                            </div>
                         </div>
                     </div>
                 `;
@@ -779,7 +780,10 @@
             
             content += '</div>';
             
-            showResult(true, `נמצאו ${orders.length} הזמנות עבור ${customerName}`, content);
+            const totalOrders = orders.length;
+            const totalCustomers = Object.keys(customerGroups).length;
+            
+            showResult(true, `נמצאו ${totalOrders} הזמנות עבור ${totalCustomers} לקוחות`, content);
         }
         
         function formatDate(dateString) {
