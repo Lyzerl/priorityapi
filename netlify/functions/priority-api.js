@@ -106,16 +106,8 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נסה פורמטים שונים של תאריך
-      const dateFormats = [
-        `${baseUrl}?$filter=DUEDATE eq '${date}'`,
-        `${baseUrl}?$filter=DUEDATE eq '${date}T00:00:00'`,
-        `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`,
-        `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'`
-      ];
-      
-      // נשתמש בפורמט הראשון (הפשוט ביותר)
-      apiUrl = dateFormats[0];
+      // הפורמט הנכון לפי הבדיקה שלך
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z`;
       console.log('Using date filter for:', date);
       console.log('API URL with date filter:', apiUrl);
     }
@@ -134,9 +126,9 @@ exports.handler = async (event, context) => {
         console.log('400 error - trying different date formats...');
         
         const dateFormats = [
-          `${baseUrl}?$filter=DUEDATE eq '${date}T00:00:00'`,
+          `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z`,
+          `${baseUrl}?$filter=DUEDATE eq '${date}'`,
           `${baseUrl}?$filter=DUEDATE ge '${date}' and DUEDATE le '${date}T23:59:59'`,
-          `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`,
           baseUrl // בלי פילטר תאריך
         ];
         
