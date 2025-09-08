@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Data Portal - Secure</title>
+    <title>Priority Data Portal - Advanced</title>
     <style>
         * {
             box-sizing: border-box;
@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -49,55 +49,64 @@
             padding: 40px;
         }
         
-        .security-badge {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
+        .steps-container {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
         }
         
-        .security-badge h3 {
-            margin-bottom: 10px;
-            font-size: 1.4em;
-        }
-        
-        .search-section {
+        .step-card {
+            flex: 1;
+            min-width: 300px;
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 25px;
             border: 1px solid #e9ecef;
         }
         
-        .search-section h3 {
+        .step-card.active {
+            border: 2px solid #667eea;
+            background: #f0f4ff;
+        }
+        
+        .step-card h3 {
             color: #495057;
-            margin-bottom: 25px;
-            font-size: 1.4em;
+            margin-bottom: 20px;
+            font-size: 1.3em;
             text-align: center;
         }
         
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
         .date-group {
-            max-width: 400px;
-            margin: 0 auto 20px;
+            margin: 20px 0;
         }
         
         .date-group label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #495057;
-            text-align: center;
         }
         
         .date-group input {
             width: 100%;
-            padding: 15px;
+            padding: 12px 15px;
             border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 18px;
-            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
             direction: ltr;
             transition: all 0.3s ease;
         }
@@ -108,38 +117,71 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        .search-info {
-            background: #e7f3ff;
-            border: 1px solid #b8daff;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            color: #0c5460;
-            margin-top: 15px;
+        .customer-search {
+            margin: 20px 0;
+        }
+        
+        .customer-search input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .customer-search input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .customer-dropdown {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-top: 5px;
+            background: white;
+            display: none;
+        }
+        
+        .customer-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .customer-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .customer-option:last-child {
+            border-bottom: none;
         }
         
         .button-group {
             text-align: center;
-            margin: 40px 0;
+            margin: 30px 0;
         }
         
         .btn {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 15px 35px;
-            border-radius: 30px;
+            padding: 12px 30px;
+            border-radius: 25px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             margin: 10px;
             transition: all 0.3s ease;
-            min-width: 160px;
+            min-width: 150px;
         }
         
         .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
         
         .btn:disabled {
@@ -152,14 +194,10 @@
             background: linear-gradient(45deg, #6c757d, #495057);
         }
         
-        .btn-test {
-            background: linear-gradient(45deg, #28a745, #20c997);
-        }
-        
         .loading {
             display: none;
             text-align: center;
-            padding: 40px;
+            padding: 30px;
             color: #667eea;
         }
         
@@ -167,15 +205,10 @@
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        .loading-text {
-            font-size: 18px;
-            font-weight: 500;
+            margin: 0 auto 15px;
         }
         
         @keyframes spin {
@@ -218,85 +251,95 @@
             padding: 30px;
         }
         
-        .data-summary {
+        .customer-details {
             background: #e7f3ff;
             border: 1px solid #b8daff;
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
-            text-align: center;
         }
         
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .customer-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
         }
         
-        .data-table th {
-            background: linear-gradient(45deg, #495057, #6c757d);
-            color: white;
-            padding: 15px 10px;
-            text-align: right;
-            font-weight: 600;
-            font-size: 14px;
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
         
-        .data-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #dee2e6;
-            text-align: right;
-            font-size: 14px;
+        .info-item strong {
+            color: #495057;
+            display: block;
+            margin-bottom: 5px;
         }
         
-        .data-table tbody tr:nth-child(even) {
-            background: #f8f9fa;
+        .orders-section {
+            margin-top: 30px;
         }
         
-        .data-table tbody tr:hover {
-            background: #e3f2fd;
-        }
-        
-        .json-viewer {
-            background: #2d3748;
-            color: #e2e8f0;
+        .order-card {
+            background: white;
+            border: 1px solid #dee2e6;
             border-radius: 10px;
             padding: 20px;
-            font-family: 'Courier New', monospace;
-            max-height: 350px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin: 20px 0;
-            font-size: 13px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
-        .performance-note {
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .order-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .order-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
             background: #fff3cd;
-            border: 1px solid #ffeaa7;
             color: #856404;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 30px 0;
+        }
+        
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .data-count {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
-        }
-        
-        .status-icon {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 8px;
-        }
-        
-        .status-success {
-            background: #28a745;
-        }
-        
-        .status-error {
-            background: #dc3545;
+            color: #495057;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -304,50 +347,59 @@
     <div class="container">
         <div class="header">
             <h1>Priority Data Portal</h1>
-            <p>מערכת מאובטחת לחיפוש נתוני Priority</p>
+            <p>מערכת מתקדמת לחיפוש הזמנות ופרטי לקוחות</p>
         </div>
         
         <div class="main-content">
-            <div class="security-badge">
-                <h3>מערכת מאובטחת</h3>
-                <p>פרטי החיבור מוגדרים בשרת ומוגנים במשתני סביבה</p>
-                <p>אין צורך להזין פרטי חיבור - הכל מטופל אוטומטית</p>
-            </div>
-            
-            <div class="search-section">
-                <h3>חיפוש נתונים במערכת Priority</h3>
-                
-                <div class="date-group">
-                    <label for="searchDate">בחר תאריך לחיפוש (DUEDATE):</label>
-                    <input type="date" id="searchDate" value="2025-08-31">
+            <div class="steps-container">
+                <!-- שלב 1: טעינת נתונים -->
+                <div class="step-card active" id="step1">
+                    <h3><span class="step-number">1</span>טעינת נתוני היום</h3>
+                    
+                    <div class="date-group">
+                        <label for="searchDate">תאריך לטעינת נתונים:</label>
+                        <input type="date" id="searchDate" value="">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="loadDayData()" id="loadBtn">
+                            טען נתוני היום
+                        </button>
+                    </div>
+                    
+                    <div id="dataStatus" class="data-count hidden">
+                        נטענו <span id="recordCount">0</span> הזמנות
+                    </div>
                 </div>
                 
-                <div class="search-info">
-                    <strong>חיפוש נוכחי:</strong> <span id="searchInfo">רשומות עם תאריך יעד 31/08/2025</span>
+                <!-- שלב 2: חיפוש לקוח -->
+                <div class="step-card" id="step2">
+                    <h3><span class="step-number">2</span>חיפוש לקוח</h3>
+                    
+                    <div class="customer-search">
+                        <label for="customerInput">מספר לקוח או שם:</label>
+                        <input type="text" id="customerInput" placeholder="הקלד מספר לקוח או שם">
+                        <div class="customer-dropdown" id="customerDropdown"></div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn" onclick="searchCustomer()" id="searchBtn" disabled>
+                            חפש הזמנות לקוח
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearResults()">
+                            נקה
+                        </button>
+                    </div>
                 </div>
             </div>
             
-            <div class="button-group">
-                <button class="btn btn-test" onclick="testConnection()" id="testBtn">
-                    בדוק חיבור למערכת
-                </button>
-                <button class="btn" onclick="fetchData()" id="fetchBtn">
-                    חפש נתונים
-                </button>
-                <button class="btn btn-secondary" onclick="clearResults()">
-                    נקה תוצאות
-                </button>
-            </div>
-            
-            <div class="performance-note">
-                <strong>שים לב:</strong> הבקשות עלולות לקחת 10-30 שניות בגלל החיבור לשרת Priority חיצוני
-            </div>
-            
+            <!-- מצב טעינה -->
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
-                <div class="loading-text">מתחבר למערכת Priority...</div>
+                <div class="loading-text">טוען נתונים...</div>
             </div>
             
+            <!-- תוצאות -->
             <div class="results" id="results">
                 <div class="result-header" id="resultHeader">
                     <h3 id="resultTitle"></h3>
@@ -360,27 +412,91 @@
 
     <script>
         const API_ENDPOINT = '/.netlify/functions/priority-api';
+        let allOrders = []; // מאחסן את כל ההזמנות
+        let customers = []; // רשימת לקוחות
         
-        // עדכון מידע החיפוש כשמשנים תאריך
-        document.getElementById('searchDate').addEventListener('change', function() {
-            const date = this.value;
-            const formatted = new Date(date).toLocaleDateString('he-IL');
-            document.getElementById('searchInfo').textContent = `רשומות עם תאריך יעד ${formatted}`;
+        // הגדרת תאריך היום כברירת מחדל
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById('searchDate').value = formattedDate;
+            
+            // הגדרת חיפוש לקוחות
+            setupCustomerSearch();
         });
         
-        function showLoading(message = 'מתחבר למערכת Priority') {
+        function setupCustomerSearch() {
+            const input = document.getElementById('customerInput');
+            const dropdown = document.getElementById('customerDropdown');
+            
+            input.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value.length >= 2) {
+                    filterCustomers(value);
+                } else {
+                    dropdown.style.display = 'none';
+                }
+                
+                // הפעל כפתור חיפוש אם יש טקסט
+                document.getElementById('searchBtn').disabled = value.length === 0;
+            });
+            
+            // סגור dropdown כשלוחצים מחוץ לו
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+        
+        function filterCustomers(searchText) {
+            const dropdown = document.getElementById('customerDropdown');
+            
+            if (customers.length === 0) {
+                dropdown.innerHTML = '<div class="customer-option">טען נתונים תחילה</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            const filtered = customers.filter(customer => 
+                customer.name.includes(searchText) || 
+                customer.id.includes(searchText)
+            );
+            
+            if (filtered.length > 0) {
+                dropdown.innerHTML = filtered.map(customer => 
+                    `<div class="customer-option" onclick="selectCustomer('${customer.id}', '${customer.name}')">
+                        ${customer.id} - ${customer.name}
+                    </div>`
+                ).join('');
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.innerHTML = '<div class="customer-option">לא נמצאו תוצאות</div>';
+                dropdown.style.display = 'block';
+            }
+        }
+        
+        function selectCustomer(customerId, customerName) {
+            document.getElementById('customerInput').value = `${customerId} - ${customerName}`;
+            document.getElementById('customerDropdown').style.display = 'none';
+            document.getElementById('searchBtn').disabled = false;
+        }
+        
+        function showLoading(message = 'טוען נתונים') {
             document.getElementById('loading').style.display = 'block';
             document.querySelector('.loading-text').textContent = message;
             document.getElementById('results').style.display = 'none';
             
-            document.getElementById('testBtn').disabled = true;
-            document.getElementById('fetchBtn').disabled = true;
+            document.getElementById('loadBtn').disabled = true;
+            document.getElementById('searchBtn').disabled = true;
         }
         
         function hideLoading() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('testBtn').disabled = false;
-            document.getElementById('fetchBtn').disabled = false;
+            document.getElementById('loadBtn').disabled = false;
+            
+            const customerInput = document.getElementById('customerInput').value.trim();
+            document.getElementById('searchBtn').disabled = customerInput.length === 0;
         }
         
         function showResult(isSuccess, title, content) {
@@ -397,17 +513,6 @@
             results.style.display = 'block';
         }
         
-        function getSearchDate() {
-            const date = document.getElementById('searchDate').value;
-            
-            if (!date) {
-                showResult(false, 'שגיאת קלט', '<p>אנא בחר תאריך לחיפוש</p>');
-                return null;
-            }
-            
-            return date;
-        }
-        
         async function callNetlifyFunction(data) {
             try {
                 const response = await fetch(API_ENDPOINT, {
@@ -419,18 +524,11 @@
                 });
                 
                 const text = await response.text();
-                
                 if (!text.trim()) {
                     throw new Error('תשובה ריקה מהשרת');
                 }
                 
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (parseError) {
-                    throw new Error('שגיאה בפענוח התשובה מהשרת');
-                }
-                
+                const result = JSON.parse(text);
                 return {
                     ok: response.ok,
                     status: response.status,
@@ -442,53 +540,14 @@
             }
         }
         
-        async function testConnection() {
-            const date = getSearchDate();
-            if (!date) return;
-            
-            showLoading('בודק חיבור למערכת Priority');
-            
-            try {
-                const response = await callNetlifyFunction({
-                    date: date,
-                    action: 'test'
-                });
-                
-                if (response.ok && response.data.success) {
-                    showResult(true, 'חיבור הצליח!', `
-                        <div class="data-summary">
-                            <h4><span class="status-icon status-success"></span>מחובר בהצלחה למערכת Priority</h4>
-                            <p>האימות מאובטח ומוגדר בשרת</p>
-                            <p>המערכת זמינה ומוכנה לקבלת נתונים</p>
-                        </div>
-                        <p style="text-align: center; margin-top: 20px;">
-                            עכשיו תוכל ללחוץ על "חפש נתונים" לחיפוש בתאריך שבחרת
-                        </p>
-                    `);
-                } else {
-                    showResult(false, 'שגיאת חיבור', `
-                        <p><span class="status-icon status-error"></span><strong>שגיאה:</strong> ${response.data.error || 'שגיאה לא ידועה'}</p>
-                        <p>יתכן שיש בעיה בהגדרות השרת או ברשאות הגישה למערכת Priority.</p>
-                        <p style="margin-top: 15px;"><strong>בדוק:</strong> האם משתני הסביבה מוגדרים נכון ב-Netlify</p>
-                    `);
-                }
-                
-            } catch (error) {
-                showResult(false, 'שגיאת תקשורת', `
-                    <p><span class="status-icon status-error"></span><strong>שגיאה:</strong> ${error.message}</p>
-                    <p>ייתכן שיש בעיית רשת או שהשרת לא זמין זמנית.</p>
-                    <p style="margin-top: 15px;">נסה שוב בעוד כמה דקות.</p>
-                `);
-            } finally {
-                hideLoading();
+        async function loadDayData() {
+            const date = document.getElementById('searchDate').value;
+            if (!date) {
+                alert('אנא בחר תאריך');
+                return;
             }
-        }
-        
-        async function fetchData() {
-            const date = getSearchDate();
-            if (!date) return;
             
-            showLoading('מחפש נתונים במערכת Priority - זה עלול לקחת זמן');
+            showLoading('טוען נתוני היום מ-Priority');
             
             try {
                 const response = await callNetlifyFunction({
@@ -497,110 +556,192 @@
                 });
                 
                 if (response.ok && response.data.success) {
-                    displayData(response.data.data, date);
+                    allOrders = response.data.data.value || [];
+                    
+                    // יצירת רשימת לקוחות
+                    customers = extractCustomers(allOrders);
+                    
+                    // עדכון UI
+                    updateDataStatus(allOrders.length);
+                    activateStep2();
+                    
+                    showResult(true, 'נתונים נטענו בהצלחה', `
+                        <div class="data-count">
+                            נטענו <strong>${allOrders.length}</strong> הזמנות מתאריך ${new Date(date).toLocaleDateString('he-IL')}
+                        </div>
+                        <p style="text-align: center;">עכשיו אתה יכול לחפש לקוח בשלב 2</p>
+                    `);
+                    
                 } else {
-                    showResult(false, 'שגיאה בקבלת נתונים', `
-                        <p><span class="status-icon status-error"></span><strong>שגיאה:</strong> ${response.data.error || 'שגיאה לא ידועה'}</p>
-                        <p>בדוק שההגדרות בשרת תקינות ושיש רשאות גישה למערכת Priority.</p>
+                    showResult(false, 'שגיאה בטעינת נתונים', `
+                        <p>שגיאה: ${response.data.error || 'שגיאה לא ידועה'}</p>
                     `);
                 }
                 
             } catch (error) {
                 showResult(false, 'שגיאת תקשורת', `
-                    <p><span class="status-icon status-error"></span><strong>שגיאה:</strong> ${error.message}</p>
-                    <p>ייתכן שיש בעיית רשת או שהשרת עמוס. נסה שוב בעוד כמה דקות.</p>
+                    <p>שגיאה: ${error.message}</p>
                 `);
             } finally {
                 hideLoading();
             }
         }
         
-        function displayData(data, searchDate) {
-            const formattedDate = new Date(searchDate).toLocaleDateString('he-IL');
+        function extractCustomers(orders) {
+            const customerMap = new Map();
             
-            let content = `
-                <div class="data-summary">
-                    <h4>תוצאות חיפוש ליום ${formattedDate}</h4>
-                    <p>נמצאו <strong>${data.value ? data.value.length : 0}</strong> רשומות במערכת Priority</p>
-                </div>
-            `;
+            orders.forEach(order => {
+                // נניח שיש שדות CUSTNAME ו-CUSTNO
+                const custId = order.CUSTNO || order.CustomerID || order.CUST_ID || 'לא ידוע';
+                const custName = order.CUSTNAME || order.CustomerName || order.CUST_NAME || 'לא ידוע';
+                
+                if (custId !== 'לא ידוע') {
+                    customerMap.set(custId, {
+                        id: custId,
+                        name: custName
+                    });
+                }
+            });
             
-            if (data.value && data.value.length > 0) {
-                content += '<table class="data-table">';
-                
-                // כותרות טבלה
-                const firstRow = data.value[0];
-                content += '<thead><tr>';
-                for (let key in firstRow) {
-                    content += `<th>${key}</th>`;
-                }
-                content += '</tr></thead><tbody>';
-                
-                // שורות נתונים (מגביל ל-100 שורות)
-                const displayRows = data.value.slice(0, 100);
-                displayRows.forEach(row => {
-                    content += '<tr>';
-                    for (let key in row) {
-                        let value = row[key];
-                        
-                        // עיצוב תאריכים
-                        if (key.includes('DATE') && value && typeof value === 'string' && value.includes('T')) {
-                            try {
-                                const date = new Date(value);
-                                value = date.toLocaleDateString('he-IL') + ' ' + 
-                                       date.toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
-                            } catch (e) {
-                                // השאר כמו שהוא
-                            }
-                        }
-                        
-                        if (value === null || value === undefined) {
-                            value = '-';
-                        }
-                        
-                        // חיתוך טקסט ארוך
-                        if (typeof value === 'string' && value.length > 60) {
-                            value = value.substring(0, 57) + '...';
-                        }
-                        
-                        content += `<td>${value}</td>`;
-                    }
-                    content += '</tr>';
-                });
-                
-                content += '</tbody></table>';
-                
-                if (data.value.length > 100) {
-                    content += `<p style="text-align: center; color: #6c757d; margin-top: 15px; font-style: italic;">
-                        מציג 100 רשומות ראשונות מתוך ${data.value.length} רשומות
-                    </p>`;
-                }
-                
-            } else {
-                content += `<p style="text-align: center; padding: 30px; color: #6c757d; font-size: 16px;">
-                    לא נמצאו רשומות עבור התאריך ${formattedDate}
-                </p>`;
+            return Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        function updateDataStatus(count) {
+            document.getElementById('recordCount').textContent = count;
+            document.getElementById('dataStatus').classList.remove('hidden');
+        }
+        
+        function activateStep2() {
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+        }
+        
+        function searchCustomer() {
+            const input = document.getElementById('customerInput').value.trim();
+            if (!input) {
+                alert('אנא הכנס מספר לקוח או שם');
+                return;
             }
             
-            // נתונים גולמיים
-            content += `
-                <h4 style="margin-top: 40px; text-align: center;">נתונים גולמיים (JSON):</h4>
-                <div class="json-viewer">${JSON.stringify(data, null, 2)}</div>
+            if (allOrders.length === 0) {
+                alert('אנא טען נתונים תחילה');
+                return;
+            }
+            
+            showLoading('מחפש הזמנות לקוח');
+            
+            setTimeout(() => {
+                try {
+                    // חיפוש לקוח
+                    const searchTerm = input.toLowerCase();
+                    const customerOrders = allOrders.filter(order => {
+                        const custId = (order.CUSTNO || order.CustomerID || order.CUST_ID || '').toString().toLowerCase();
+                        const custName = (order.CUSTNAME || order.CustomerName || order.CUST_NAME || '').toString().toLowerCase();
+                        
+                        return custId.includes(searchTerm) || custName.includes(searchTerm);
+                    });
+                    
+                    if (customerOrders.length > 0) {
+                        displayCustomerOrders(customerOrders);
+                    } else {
+                        showResult(false, 'לא נמצאו תוצאות', `
+                            <p>לא נמצאו הזמנות עבור: ${input}</p>
+                            <p>בדוק את המספר או השם ונסה שוב</p>
+                        `);
+                    }
+                    
+                } catch (error) {
+                    showResult(false, 'שגיאה', `<p>שגיאה בחיפוש: ${error.message}</p>`);
+                } finally {
+                    hideLoading();
+                }
+            }, 500);
+        }
+        
+        function displayCustomerOrders(orders) {
+            if (orders.length === 0) return;
+            
+            // פרטי הלקוח מההזמנה הראשונה
+            const firstOrder = orders[0];
+            const customerId = firstOrder.CUSTNO || firstOrder.CustomerID || firstOrder.CUST_ID || 'לא ידוע';
+            const customerName = firstOrder.CUSTNAME || firstOrder.CustomerName || firstOrder.CUST_NAME || 'לא ידוע';
+            
+            let content = `
+                <div class="customer-details">
+                    <h4 style="margin-bottom: 15px; text-align: center;">פרטי לקוח</h4>
+                    <div class="customer-info">
+                        <div class="info-item">
+                            <strong>מספר לקוח:</strong>
+                            ${customerId}
+                        </div>
+                        <div class="info-item">
+                            <strong>שם לקוח:</strong>
+                            ${customerName}
+                        </div>
+                        <div class="info-item">
+                            <strong>כתובת:</strong>
+                            ${firstOrder.ADDRESS || firstOrder.CUSTADDRESS || 'לא זמין'}
+                        </div>
+                        <div class="info-item">
+                            <strong>טלפון:</strong>
+                            ${firstOrder.PHONE || firstOrder.CUSTPHONE || 'לא זמין'}
+                        </div>
+                        <div class="info-item">
+                            <strong>סה"כ הזמנות:</strong>
+                            ${orders.length}
+                        </div>
+                        <div class="info-item">
+                            <strong>תאריך עדכון:</strong>
+                            ${new Date().toLocaleDateString('he-IL')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="orders-section">
+                    <h4 style="margin-bottom: 20px;">הזמנות הלקוח:</h4>
             `;
             
-            showResult(true, 'נתונים התקבלו בהצלחה!', content);
+            orders.forEach((order, index) => {
+                const orderNumber = order.ORDNO || order.OrderNumber || order.ORDER_ID || `הזמנה ${index + 1}`;
+                const orderDate = order.ORDERDATE || order.ORDER_DATE || order.DUEDATE || 'לא ידוע';
+                const orderStatus = order.STATUS || order.ORDER_STATUS || 'פעיל';
+                const orderAmount = order.TOTPRICE || order.TOTAL || order.AMOUNT || 'לא ידוע';
+                
+                content += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div class="order-number">הזמנה: ${orderNumber}</div>
+                            <div class="order-status status-active">${orderStatus}</div>
+                        </div>
+                        <div class="order-details">
+                            <div><strong>תאריך:</strong> ${formatDate(orderDate)}</div>
+                            <div><strong>סכום:</strong> ${orderAmount}</div>
+                            <div><strong>מוצר:</strong> ${order.PARTNAME || order.PRODUCT || 'לא ידוע'}</div>
+                            <div><strong>כמות:</strong> ${order.TQUANT || order.QUANTITY || 'לא ידוע'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content += '</div>';
+            
+            showResult(true, `נמצאו ${orders.length} הזמנות עבור ${customerName}`, content);
+        }
+        
+        function formatDate(dateString) {
+            try {
+                return new Date(dateString).toLocaleDateString('he-IL');
+            } catch {
+                return dateString;
+            }
         }
         
         function clearResults() {
             document.getElementById('results').style.display = 'none';
+            document.getElementById('customerInput').value = '';
+            document.getElementById('customerDropdown').style.display = 'none';
+            document.getElementById('searchBtn').disabled = true;
         }
-        
-        // אתחול הדף
-        document.addEventListener('DOMContentLoaded', function() {
-            const date = document.getElementById('searchDate').value;
-            const formatted = new Date(date).toLocaleDateString('he-IL');
-            document.getElementById('searchInfo').textContent = `רשומות עם תאריך יעד ${formatted}`;
-        });
     </script>
 </body>
 </html>
