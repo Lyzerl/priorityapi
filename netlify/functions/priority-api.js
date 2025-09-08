@@ -31,9 +31,24 @@ exports.handler = async (event, context) => {
       apiUrl = baseUrl + '?$filter=DUEDATE%20eq%20' + date + 'T00:00:00Z';
     }
 
+    console.log('Making request to:', apiUrl);
     const result = await makeHttpsRequest(apiUrl, auth);
+    console.log('Response status:', result.statusCode);
+    console.log('Response body (first 200 chars):', result.body.substring(0, 200));
 
     if (result.statusCode === 200) {
+      // בדיקה אם זה JSON תקין
+      if (!result.body.trim().startsWith('{')) {
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ 
+            error: 'התשובה מהשרת לא בפורמט JSON',
+            response: result.body.substring(0, 500)
+          })
+        };
+      }
+
       let data;
       try {
         data = JSON.parse(result.body);
@@ -41,7 +56,10 @@ exports.handler = async (event, context) => {
         return {
           statusCode: 500,
           headers,
-          body: JSON.stringify({ error: 'תשובה לא תקינה מהשרת' })
+          body: JSON.stringify({ 
+            error: 'שגיאת JSON: ' + parseError.message,
+            response: result.body.substring(0, 500)
+          })
         };
       }
 
@@ -60,11 +78,15 @@ exports.handler = async (event, context) => {
       return {
         statusCode: result.statusCode,
         headers,
-        body: JSON.stringify({ error: 'שגיאה ' + result.statusCode })
+        body: JSON.stringify({ 
+          error: 'שגיאה ' + result.statusCode,
+          response: result.body.substring(0, 500)
+        })
       };
     }
 
   } catch (error) {
+    console.error('Function error:', error);
     return {
       statusCode: 500,
       headers,
@@ -85,7 +107,8 @@ function makeHttpsRequest(url, auth) {
       method: 'GET',
       headers: {
         'Authorization': 'Basic ' + auth,
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       }
     };
 
@@ -101,6 +124,7 @@ function makeHttpsRequest(url, auth) {
     });
     
     req.on('error', reject);
+    req.setTimeout(30000, () => req.destroy());
     req.end();
   });
 }
