@@ -13,16 +13,20 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { username, password, date, action } = JSON.parse(event.body);
-
+    // פרטי חיבור ממשתני סביבה
+    const username = process.env.PRIORITY_USERNAME;
+    const password = process.env.PRIORITY_PASSWORD;
+    
     if (!username || !password) {
       return {
-        statusCode: 400,
+        statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'חסרים שם משתמש או סיסמה' })
+        body: JSON.stringify({ error: 'פרטי חיבור לא מוגדרים בשרת - בדוק משתני סביבה' })
       };
     }
 
+    const { date, action } = JSON.parse(event.body);
+    
     const auth = Buffer.from(username + ':' + password).toString('base64');
     const baseUrl = 'https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
     
@@ -31,46 +35,17 @@ exports.handler = async (event, context) => {
       apiUrl = baseUrl + '?$filter=DUEDATE%20eq%20' + date + 'T00:00:00Z';
     }
 
-    console.log('Making request to:', apiUrl);
+    console.log('Request URL:', apiUrl);
     const result = await makeHttpsRequest(apiUrl, auth);
-    console.log('Response status:', result.statusCode);
-    console.log('Response body (first 200 chars):', result.body.substring(0, 200));
 
     if (result.statusCode === 200) {
-      // בדיקה אם זה JSON תקין
-      if (!result.body.trim().startsWith('{')) {
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ 
-            error: 'התשובה מהשרת לא בפורמט JSON',
-            response: result.body.substring(0, 500)
-          })
-        };
-      }
-
-      let data;
-      try {
-        data = JSON.parse(result.body);
-      } catch (parseError) {
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ 
-            error: 'שגיאת JSON: ' + parseError.message,
-            response: result.body.substring(0, 500)
-          })
-        };
-      }
-
+      let data = JSON.parse(result.body);
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
           data: data,
-          user: username,
-          searchDate: date,
           recordCount: data && data.value ? data.value.length : 0
         })
       };
@@ -78,10 +53,7 @@ exports.handler = async (event, context) => {
       return {
         statusCode: result.statusCode,
         headers,
-        body: JSON.stringify({ 
-          error: 'שגיאה ' + result.statusCode,
-          response: result.body.substring(0, 500)
-        })
+        body: JSON.stringify({ error: 'שגיאה ' + result.statusCode })
       };
     }
 
@@ -90,9 +62,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'שגיאת שרת: ' + error.message
-      })
+      body: JSON.stringify({ error: 'שגיאת שרת: ' + error.message })
     };
   }
 };
@@ -107,20 +77,14 @@ function makeHttpsRequest(url, auth) {
       method: 'GET',
       headers: {
         'Authorization': 'Basic ' + auth,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Accept': 'application/json'
       }
     };
 
     const req = https.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        resolve({
-          statusCode: res.statusCode,
-          body: data
-        });
-      });
+      res.on('end', () => resolve({ statusCode: res.statusCode, body: data }));
     });
     
     req.on('error', reject);
