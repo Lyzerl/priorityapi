@@ -32,8 +32,46 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { date, action } = JSON.parse(event.body);
+    // בדיקה שהבקשה תקינה
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'בקשה ריקה - אין נתונים בבקשה',
+          debug: { hasBody: !!event.body }
+        })
+      };
+    }
+    
+    let requestData;
+    try {
+      requestData = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'שגיאה בפרסור הבקשה - JSON לא תקין',
+          debug: { parseError: parseError.message }
+        })
+      };
+    }
+    
+    const { date, action } = requestData;
     console.log('Request:', { date, action });
+    
+    // בדיקה שהפעולה תקינה
+    if (!action || action !== 'getData') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'פעולה לא תקינה - רק getData נתמכת',
+          debug: { action: action }
+        })
+      };
+    }
     
     const auth = Buffer.from(`${username}:${password}`).toString('base64');
     console.log('Auth created, length:', auth.length);
@@ -45,27 +83,14 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // נסה תחילה בלי פילטר כדי לוודא שהחיבור עובד
-      console.log('Testing connection without date filter first...');
-      
-      // נסה קודם בלי פילטר תאריך
-      const testResult = await makeHttpsRequest(baseUrl, auth);
-      console.log('Test connection result:', testResult.statusCode);
-      
-      if (testResult.statusCode === 200) {
-        // אם החיבור עובד, נסה עם פילטר תאריך
-        apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
-        console.log('Connection successful, trying with date filter...');
-      } else {
-        // אם החיבור לא עובד, נשתמש ב-URL הבסיסי
-        console.log('Connection failed, using base URL without filter');
-        apiUrl = baseUrl;
-      }
+      // נסה עם פילטר תאריך
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq datetime'${date}T00:00:00'`;
+      console.log('Using date filter for:', date);
     }
 
     console.log('API URL:', apiUrl);
     
-    // נסה קודם בדיקת connectivity פשוטה
+    // נסה את הבקשה הראשונה
     let result;
     try {
       result = await makeHttpsRequest(apiUrl, auth);
@@ -74,9 +99,9 @@ exports.handler = async (event, context) => {
     } catch (timeoutError) {
       console.error('Request failed with timeout or network error:', timeoutError.message);
       
-      // נסה fallback עם URL פשוט יותר
+      // נסה fallback עם URL פשוט יותר (בלי פילטר תאריך)
       if (apiUrl !== baseUrl) {
-        console.log('Trying fallback with base URL...');
+        console.log('Trying fallback with base URL (no date filter)...');
         try {
           result = await makeHttpsRequest(baseUrl, auth);
           console.log('Fallback response status:', result.statusCode);
@@ -182,14 +207,32 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Function error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // טיפול מיוחד בשגיאות שונות
+    let errorMessage = 'שגיאת שרת כללית';
+    let statusCode = 500;
+    
+    if (error.message.includes('timeout')) {
+      errorMessage = 'שגיאת timeout - השרת לא מגיב בזמן הקצוב';
+      statusCode = 504;
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      errorMessage = 'שגיאת חיבור - לא ניתן להתחבר לשרת Priority';
+      statusCode = 503;
+    } else if (error.message.includes('Unexpected token') || error.message.includes('JSON')) {
+      errorMessage = 'שגיאה בפרסור התשובה מהשרת';
+      statusCode = 502;
+    }
+    
     return {
-      statusCode: 500,
+      statusCode: statusCode,
       headers,
       body: JSON.stringify({ 
-        error: 'שגיאת שרת כללית',
+        error: errorMessage,
         debug: {
           message: error.message,
-          stack: error.stack.substring(0, 500)
+          stack: error.stack ? error.stack.substring(0, 500) : 'No stack trace',
+          timestamp: new Date().toISOString()
         }
       })
     };
