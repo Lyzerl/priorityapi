@@ -414,8 +414,8 @@
     </div>
 
     <script>
-        // נסה גישה ישירה עם CORS proxy
-        const API_ENDPOINT = 'https://cors-anywhere.herokuapp.com/https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE';
+        // נסה גישה ישירה עם CORS proxy אחר
+        const API_ENDPOINT = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE');
         let allOrders = []; // מאחסן את כל ההזמנות
         let customers = []; // רשימת לקוחות
         
@@ -525,7 +525,8 @@
                 const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 שניות timeout
                 
                 // בנה URL עם פילטר תאריך
-                const apiUrl = `${API_ENDPOINT}?$filter=DUEDATE eq ${date}T00:00:00Z`;
+                const targetUrl = `https://p.priority-connect.online/odata/Priority/tabbc66b.ini/a080724/PRIT_ORDPACK_ONE?$filter=DUEDATE eq ${date}T00:00:00Z`;
+                const apiUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 console.log('Direct API URL:', apiUrl);
                 
                 console.log('Making direct API request...');
