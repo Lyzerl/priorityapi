@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Data Portal - Netlify</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .success-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .form-section h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .date-input {
+            direction: ltr;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+        
+        .btn-test {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #667eea;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            margin-top: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .results.success {
+            border: 2px solid #28a745;
+        }
+        
+        .results.error {
+            border: 2px solid #dc3545;
+        }
+        
+        .result-header {
+            padding: 20px;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .result-header.success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .result-header.error {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+        
+        .result-content {
+            background: white;
+            padding: 30px;
+        }
+        
+        .data-summary {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th {
+            background: linear-gradient(45deg, #495057, #6c757d);
+            color: white;
+            padding: 12px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: right;
+            font-size: 14px;
+        }
+        
+        .data-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .json-viewer {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .status-success {
+            background: #28a745;
+        }
+        
+        .status-error {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Priority Data Portal</h1>
+            <p>מופעל על Netlify - פתרון CORS מושלם</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- הודעת הצלחה -->
+            <div class="success-badge">
+                <h3>✅ פתרון CORS מושלם!</h3>
+                <p>הגרסה הזו רצה על Netlify עם Functions - אין בעיות CORS כלל!</p>
+            </div>
+            
+            <!-- טופס נתונים -->
+            <div class="form-section">
+                <h3>🔐 פרטי גישה למערכת Priority</h3>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="username">שם משתמש:</label>
+                        <input type="text" id="username" placeholder="הכנס שם משתמש" value="lapi">
+                    </div>
+                    <div class="input-group">
+                        <label for="password">סיסמה:</label>
+                        <input type="password" id="password" placeholder="הכנס סיסמה" value="1234">
+                    </div>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="searchDate">תאריך חיפוש (DUEDATE):</label>
+                        <input type="date" id="searchDate" class="date-input" value="2025-08-31">
+                    </div>
+                    <div class="input-group">
+                        <label>מידע נוכחי:</label>
+                        <div style="padding: 12px; background: #e9ecef; border-radius: 8px; color: #495057;">
+                            <span id="searchInfo">מחפש רשומות ליום 31/08/2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- כפתורי פעולה -->
+            <div class="button-group">
+                <button class="btn btn-test" onclick="testConnection()" id="testBtn">
+                    🔍 בדוק חיבור
+                </button>
+                <button class="btn" onclick="fetchData()" id="fetchBtn">
+                    📊 קבל נתונים
+                </button>
+                <button class="btn btn-secondary" onclick="clearResults()">
+                    🗑️ נקה תוצאות
+                </button>
+            </div>
+            
+            <!-- מצב טעינה -->
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">מתחבר למערכת Priority...</div>
+            </div>
+            
+            <!-- תוצאות -->
+            <div class="results" id="results">
+                <div class="result-header" id="resultHeader">
+                    <h3 id="resultTitle"></h3>
+                </div>
+                <div class="result-content" id="resultContent">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // כתובת הFunction ב-Netlify
+        const API_ENDPOINT = '/.netlify/functions/priority-api';
+        
+        // עדכון מידע החיפוש כשמשנים תאריך
+        document.getElementById('searchDate').addEventListener('change', function() {
+            const date = this.value;
+            const formatted = new Date(date).toLocaleDateString('he-IL');
+            document.getElementById('searchInfo').textContent = `מחפש רשומות ליום ${formatted}`;
+        });
+        
+        function showLoading(message = 'מתחבר למערכת Priority') {
+            document.getElementById('loading').style.display = 'block';
+            document.querySelector('.loading-text').textContent = message;
+            document.getElementById('results').style.display = 'none';
+            
+            // השבת כפתורים
+            document.getElementById('testBtn').disabled = true;
+            document.getElementById('fetchBtn').disabled = true;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            
+            // הפעל כפתורים
+            document.getElementById('testBtn').disabled = false;
+            document.getElementById('fetchBtn').disabled = false;
+        }
+        
+        function showResult(isSuccess, title, content) {
+            const results = document.getElementById('results');
+            const header = document.getElementById('resultHeader');
+            const titleElement = document.getElementById('resultTitle');
+            const contentElement = document.getElementById('resultContent');
+            
+            results.className = isSuccess ? 'results success' : 'results error';
+            header.className = isSuccess ? 'result-header success' : 'result-header error';
+            titleElement.textContent = title;
+            contentElement.innerHTML = content;
+            
+            results.style.display = 'block';
+        }
+        
+        function getFormData() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const date = document.getElementById('searchDate').value;
+            
+            if (!username || !password) {
+                showResult(false, 'שגיאת קלט', '<p>אנא מלא שם משתמש וסיסמה</p>');
+                return null;
+            }
+            
+            if (!date) {
+                showResult(false, 'שגיאת קלט', '<p>אנא בחר תאריך לחיפוש</p>');
+                return null;
+            }
+            
+            return { username, password, date };
+        }
+        
+        async function callNetlifyFunction(data) {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            return response;
+        }
+        
+        async function testConnection() {
+            const formData = getFormData();
+            if (!formData) return;
+            
+            showLoading('בודק חיבור דרך Netlify Function');
+            
+            try {
+                const response = await callNetlifyFunction({
+                    username: formData.username,
+                    password: formData.password,
+                    action: 'test'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showResult(true, 'חיבור הצליח!', `
+                        <div class="data-summary">
+                            <h4>✅ מחובר בהצלחה כמשתמש: ${formData.username}</h4>
+                            <p><span class="status-indicator status-success"></span>החיבור ל-Priority API תקין</p>
+                            <p><span class="status-indicator status-success"></span>Netlify Function פועל כראוי</p>
+                        </div>
+                        <p>המערכת מוכנה לקבלת נתונים. לחץ על "קבל נתונים" לחיפוש.</p>
+                    `);
+                } else {
+                    showResult(false, 'שגיאת חיבור', `
+                        <p><span class="status-indicator status-error"></span><strong>שגיאה:</strong> ${result.error || 'שגיאה לא ידועה'}</p>
+                        <p>בדוק את פרטי החיבור ורשאות הגישה למערכת Priority.</p>
+                    `);
+                }
+                
+            } catch (error) {
+                showResult(false, 'שגיאת תקשורת', `
+                    <p><span class="status-indicator status-error"></span>שגיאה: ${error.message}</p>
+                    <p>בדוק שה-Netlify Function פועל כראוי.</p>
+                `);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function fetchData() {
+            const formData = getFormData();
+            if (!formData) return;
+            
+            showLoading('מחפש נתונים במערכת Priority');
+            
+            try {
+                const response = await callNetlifyFunction({
+                    username: formData.username,
+                    password: formData.password,
+                    date: formData.date,
+                    action: 'getData'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    displayData(result.data, formData.date);
+                } else {
+                    showResult(false, 'שגיאה בקבלת נתונים', `
+                        <p><strong>שגיאה:</strong> ${result.error || 'שגיאה לא ידועה'}</p>
+                        <p>בדוק את פרטי החיבור ורשאות הגישה.</p>
+                    `);
+                }
+                
+            } catch (error) {
+                showResult(false, 'שגיאת תקשורת', `
+                    <p>שגיאה: ${error.message}</p>
+                    <p>בדוק חיבור לאינטרנט וש-Netlify Function פועל.</p>
+                `);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function displayData(data, searchDate) {
+            const formattedDate = new Date(searchDate).toLocaleDateString('he-IL');
+            
+            let content = `
+                <div class="data-summary">
+                    <h4>📊 תוצאות חיפוש ליום ${formattedDate}</h4>
+                    <p>נמצאו <strong>${data.value ? data.value.length : 0}</strong> רשומות</p>
+                </div>
+            `;
+            
+            if (data.value && data.value.length > 0) {
+                // יצירת טבלת נתונים
+                content += '<table class="data-table">';
+                
+                // כותרות טבלה
+                const firstRow = data.value[0];
+                content += '<thead><tr>';
+                for (let key in firstRow) {
+                    content += `<th>${key}</th>`;
+                }
+                content += '</tr></thead><tbody>';
+                
+                // שורות נתונים (מגביל ל-50 שורות לביצועים)
+                const displayRows = data.value.slice(0, 50);
+                displayRows.forEach(row => {
+                    content += '<tr>';
+                    for (let key in row) {
+                        let value = row[key];
+                        
+                        // עיצוב תאריכים
+                        if (key.includes('DATE') && value && typeof value === 'string' && value.includes('T')) {
+                            try {
+                                const date = new Date(value);
+                                value = date.toLocaleDateString('he-IL') + ' ' + 
+                                       date.toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'});
+                            } catch (e) {
+                                // השאר כמו שהוא
+                            }
+                        }
+                        
+                        if (value === null || value === undefined) {
+                            value = '-';
+                        }
+                        
+                        // חיתוך טקסט ארוך
+                        if (typeof value === 'string' && value.length > 50) {
+                            value = value.substring(0, 47) + '...';
+                        }
+                        
+                        content += `<td>${value}</td>`;
+                    }
+                    content += '</tr>';
+                });
+                
+                content += '</tbody></table>';
+                
+                if (data.value.length > 50) {
+                    content += `<p style="text-align: center; color: #6c757d; margin-top: 10px;">
+                        מציג 50 רשומות ראשונות מתוך ${data.value.length}
+                    </p>`;
+                }
+                
+            } else {
+                content += `<p style="text-align: center; padding: 20px; color: #6c757d;">
+                    ❌ לא נמצאו רשומות עבור התאריך ${formattedDate}
+                </p>`;
+            }
+            
+            // נתונים גולמיים (קטן יותר)
+            content += `
+                <h4 style="margin-top: 30px;">📋 נתונים גולמיים (JSON):</h4>
+                <div class="json-viewer">${JSON.stringify(data, null, 2)}</div>
+            `;
+            
+            showResult(true, `נתונים התקבלו בהצלחה!`, content);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        // אתחול ראשוני
+        document.addEventListener('DOMContentLoaded', function() {
+            // עדכון מידע החיפוש
+            const date = document.getElementById('searchDate').value;
+            const formatted = new Date(date).toLocaleDateString('he-IL');
+            document.getElementById('searchInfo').textContent = `מחפש רשומות ליום ${formatted}`;
+        });
+    </script>
+</body>
+</html>
