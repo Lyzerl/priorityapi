@@ -18,6 +18,8 @@ exports.handler = async (event, context) => {
     console.log('=== DEBUG INFO ===');
     console.log('Username exists:', !!username);
     console.log('Password exists:', !!password);
+    console.log('Username value:', username ? username.substring(0, 3) + '***' : 'undefined');
+    console.log('Password value:', password ? '***' + password.substring(password.length - 3) : 'undefined');
     
     if (!username || !password) {
       console.log('Environment variables not set - returning test data');
