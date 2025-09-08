@@ -110,10 +110,10 @@ exports.handler = async (event, context) => {
     
     // רק אם יש תאריך ופעולה מתאימה
     if (action === 'getData' && date) {
-      // הפורמט הנכון ללא הגבלת מספר רשומות
-      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z`;
+      // הפורמט הנכון עם הגבלה גדולה יותר
+      apiUrl = `${baseUrl}?$filter=DUEDATE eq ${date}T00:00:00Z&$top=5000`;
       console.log('Using date filter for:', date);
-      console.log('API URL with date filter (all records):', apiUrl);
+      console.log('API URL with date filter (limited to 5000 records):', apiUrl);
     }
 
     console.log('API URL:', apiUrl);
